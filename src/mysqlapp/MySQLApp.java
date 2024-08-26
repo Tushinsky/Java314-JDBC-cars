@@ -6,11 +6,14 @@
 package mysqlapp;
 
 import connection.JDBCConnection;
+import connection.Runquery;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import menu.CarMenu;
 
 /**
  *
@@ -19,6 +22,7 @@ import java.util.logging.Logger;
 public class MySQLApp {
 
     private static JDBCConnection connection;
+    private static CarMenu carMenu;
     /**
      * @param args the command line arguments
      * @throws java.lang.InterruptedException
@@ -36,6 +40,25 @@ public class MySQLApp {
             System.out.println("");
             if(openConnection()) {
                 System.out.println("Соединение открыто");
+                System.out.println("");
+                carMenu = new CarMenu();
+                carMenu.showMenu();
+                while(true) {
+//                    System.out.println("menuitem=" + carMenu.getMenuItem());
+//                    carMenu.doChoice();
+                    if(carMenu.getMenuItem() == 0){
+                        carMenu.closeMenu();
+                        break;
+                    }
+                }
+                
+//                try {
+//                    // создаём таблицы, заполняем их данными
+////                    createDataTable();
+//                
+//                } catch (Exception ex) {
+//                    Logger.getLogger(MySQLApp.class.getName()).log(Level.SEVERE, null, ex);
+//                }
                 i = 0;
                 System.out.print("Соединение закрывается");
                 while(i < 5) {
@@ -44,12 +67,6 @@ public class MySQLApp {
                     i++;
                 }
                 System.out.println("");
-                try {
-                    // создаём таблицы, заполняем их данными
-                    createDataTable();
-                } catch (SQLException ex) {
-                    Logger.getLogger(MySQLApp.class.getName()).log(Level.SEVERE, null, ex);
-                }
                 closeConnection();
             } else {
                 System.out.println("Что-то не сложилось.");
@@ -106,7 +123,71 @@ public class MySQLApp {
         sql = insert into sprcolor values(3,'металлик');
         sql = insert into sprcolor values(4,'красный');
         sql = insert into sprcolor values(5,'асфальт');
+        -------------В таблицу car добавим новые столбцы:
+        alter table cars.car add column idmaker integer not null;
+        alter table cars.car add column idcolor integer not null;
+        alter table cars.car add column idtype integer not null;
+        -------------Добавляем внешние ключи по этим столбцам
+        alter table cars.car add constraint fk_maker foreign key (idmaker) 
+        references cars.sprmaker (id) on update cascade on delete cascade;
+        alter table cars.car add constraint fk_color foreign key (idcolor) 
+        references cars.sprcolor (id) on update cascade on delete cascade;
+        alter table cars.car add constraint fk_cartype foreign key (idtype) 
+        references cars.sprcartype (id) on update cascade on delete cascade;
+        -------------Удаляем лишние столбцы
+        alter table cars.car drop column carmaker;
+        alter table cars.car drop column color;
+        alter table cars.car drop column cartype;
         */
+        
+        //-----------------Отображение содержимого
+        sql = "SELECT cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "cars.car.madeyear, sprcolor.name, sprcartype.name FROM cars.car " +
+        "inner join cars.sprcartype on cars.sprcartype.id=cars.car.idtype " +
+        "inner join cars.sprmaker on cars.sprmaker.id=cars.car.idmaker " +
+        "inner join cars.sprcolor on cars.sprcolor.id=cars.car.idcolor;";
+        outData(sql);
+        //------------------Все производители
+        sql = "select*from cars.sprmaker;";
+        outData(sql);
+        //------------------По году выпуска
+        sql = "SELECT cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "sprcolor.name, sprcartype.name FROM cars.car inner join cars.sprcartype " +
+        "on cars.sprcartype.id=cars.car.idtype inner join cars.sprmaker on " +
+        "cars.sprmaker.id=cars.car.idmaker inner join cars.sprcolor on " +
+        "cars.sprcolor.id=cars.car.idcolor where cars.car.madeyear=2001;";
+        outData(sql);
+        //-----------------По производителю
+        sql = "select cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "cars.car.madeyear, sprcolor.name, sprcartype.name FROM cars.car " +
+        "inner join cars.sprcartype on cars.sprcartype.id=cars.car.idtype " +
+        "inner join cars.sprmaker on cars.sprmaker.id=cars.car.idmaker " +
+        "inner join cars.sprcolor on cars.sprcolor.id=cars.car.idcolor " +
+        "where cars.car.idmaker=2;";
+        outData(sql);
+        //-----------------По цвету
+        sql = "select cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "cars.car.madeyear, sprcartype.name FROM cars.car inner join " +
+        "cars.sprcartype on cars.sprcartype.id=cars.car.idtype inner join " +
+        "cars.sprmaker on cars.sprmaker.id=cars.car.idmaker inner join " +
+        "cars.sprcolor on cars.sprcolor.id=cars.car.idcolor where cars.car.idcolor=1;";
+        outData(sql);
+        //-----------------По объёму двигателя
+        sql = "select cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "cars.car.madeyear, sprcolor.name, sprcartype.name FROM cars.car " +
+        "inner join cars.sprcartype on cars.sprcartype.id=cars.car.idtype " +
+        "inner join cars.sprmaker on cars.sprmaker.id=cars.car.idmaker " +
+        "inner join cars.sprcolor on cars.sprcolor.id=cars.car.idcolor where " +
+        "cars.car.engineflow=125;";
+        outData(sql);
+        //-----------------По типу автомобиля
+        sql = "select cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
+        "cars.car.madeyear, sprcolor.name, sprcartype.name FROM cars.car " +
+        "inner join cars.sprcartype on cars.sprcartype.id=cars.car.idtype " +
+        "inner join cars.sprmaker on cars.sprmaker.id=cars.car.idmaker " +
+        "inner join cars.sprcolor on cars.sprcolor.id=cars.car.idcolor " +
+        "where cars.car.idtype=1;";
+        outData(sql);
 //        sql = "create table car1(id integer primary key auto_increment not null, carmaker \n" +
 //"        varchar(255) not null default 'new maker', carname varchar(50) not null \n" +
 //"        default 'new name', engineflow decimal(5,2), madeyear smallint, \n" +
@@ -124,5 +205,21 @@ public class MySQLApp {
 //        i = connection.ExecuteUpdate("insert into car(engineflow,madeyear)"
 //                + " values(125.00,2001);");
 //        System.out.println("i=" + i);
+    }
+    
+    /**
+     * Вывод данных, полученных в результате запроса
+     * @param sql строка-запрос на получение данных
+     */
+    private static void outData(String sql) {
+        Runquery rq = new Runquery();// объект для получения данных
+        List<Object[]> entities = rq.getQueryEntities(sql);
+        System.out.println("Вывод данных");
+        entities.forEach((entity) -> {
+            for(Object e : entity) {
+                System.out.print(e.toString() + "\t");
+            }
+            System.out.println("");
+        });
     }
 }
