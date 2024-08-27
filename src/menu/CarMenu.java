@@ -104,8 +104,10 @@ public class CarMenu {
      * Вывод общей информации
      */
     private void showCommonInfo() {
-        sqlString = "SELECT cars.sprmaker.name, cars.car.carname, cars.car.engineflow, " +
-        "cars.car.madeyear, sprcolor.name, sprcartype.name FROM cars.car " +
+        sqlString = "SELECT cars.sprmaker.name as Производитель, " +
+                "cars.car.carname as Марка, cars.car.engineflow as Двигатель, " +
+        "cars.car.madeyear as 'Год выпуска', sprcolor.name as Цвет, " +
+                "sprcartype.name as Тип FROM cars.car " +
         "inner join cars.sprcartype on cars.sprcartype.id=cars.car.idtype " +
         "inner join cars.sprmaker on cars.sprmaker.id=cars.car.idmaker " +
         "inner join cars.sprcolor on cars.sprcolor.id=cars.car.idcolor;";
@@ -260,17 +262,60 @@ public class CarMenu {
     private static void outData(String sql) {
         Runquery rq = new Runquery();// объект для получения данных
         List<Object[]> entities = rq.getQueryEntities(sql);
-        System.out.println("Вывод данных");
+        System.out.println("Вывод данных:");
         String[] columnname = rq.getColumnName();// получаем наименования столбцов запроса
-        for(String col : columnname) {
-            System.out.print(col + "\t");
+        int[] maxWidth = new int[columnname.length];// массив размеров столбцов
+        for(int i = 0; i < columnname.length; i++) {
+            maxWidth[i] = columnname[i].length();// заполняем массив начальными значениями
+        }
+        // проходим по всем записям, находим максимальную ширину для каждого столбца
+        entities.forEach((entity) -> {
+            for(int i = 0; i < entity.length; i++) {
+                if(entity[i].toString().length() > maxWidth[i]) {
+                    maxWidth[i] = entity[i].toString().length();
+                }
+            }
+        });
+        int sum = 0;
+        for(int w : maxWidth) {
+            sum += w + 2;// подсчитываем ширину будущей таблицы
+        }
+        sum += columnname.length - 1;
+        // рисуем таблицу
+        String line = "+";
+        for(int i = 0; i < sum; i++) {
+            line = line.concat("-");
+        }
+        line = line.concat("+\n");
+        System.out.print(line);
+        // заголовок
+        System.out.print("|");
+        for(int i = 0; i < columnname.length; i++) {
+            int count = maxWidth[i] - columnname[i].length();
+            System.out.print(" " + columnname[i] + getNumSpace(count) + " |");
         }
         System.out.println();
+        System.out.print(line);
+        // данные
         entities.forEach((entity) -> {
-            for(Object e : entity) {
-                System.out.print(e.toString() + "\t");
+            System.out.print("|");
+            for(int i = 0;i < entity.length; i++) {
+                int count = maxWidth[i] - entity[i].toString().length();
+                System.out.print(" " + entity[i].toString() + getNumSpace(count) + " |");
             }
             System.out.println("");
         });
+        System.out.print(line);
+    }
+    
+    private static String getNumSpace(int count) {
+        if(count == 0) {
+            return "";
+        }
+        char[] space = new char[count];
+        for(int i = 0; i < count; i++) {
+            space[i] = ' ';
+        }
+        return String.copyValueOf(space);
     }
 }
